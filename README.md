@@ -9,8 +9,12 @@ Usage
 
 1. Fine-tune pretrained LMs on TORQUE
 
-> bash code/run_end_to_end.sh
+```
+bash code/run_end_to_end.sh
+```
 
 2. Evaluate trained model and report performances
 
-> bash code/eval_end_to_end.sh
+```
+bash code/eval_end_to_end.sh
+```
