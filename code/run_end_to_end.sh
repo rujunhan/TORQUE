@@ -17,7 +17,23 @@ do
         seeds=( 7 24 123 )
         for seed in "${seeds[@]}"
         do
-            python run_end_to_end.py --task_name "${task}" --do_train --do_eval --do_lower_case --mlp_hid_size ${mlp_hid_size} --model ${model} --data_dir ../data/ --file_suffix ${suffix} --train_ratio ${ratio} --max_seq_length 178 --train_batch_size ${s} --learning_rate ${l} --num_train_epochs ${epoch}  --gradient_accumulation_steps ${ga}  --output_dir output/${prefix}_${model}_batch_${s}_lr_${l}_epochs_${epoch}_seed_${seed}_${ratio} --seed ${seed}
+            python run_end_to_end.py \
+            --task_name "${task}" \
+            --do_train \
+            --do_eval \
+            --do_lower_case \
+            --mlp_hid_size ${mlp_hid_size} \
+            --model ${model} \
+            --data_dir ../data/ \
+            --file_suffix ${suffix} \
+            --train_ratio ${ratio} \
+            --max_seq_length 178 \
+            --train_batch_size ${s} \
+            --learning_rate ${l} \
+            --seed ${seed} \
+            --num_train_epochs ${epoch}  \
+            --gradient_accumulation_steps ${ga}  \
+            --output_dir output/${prefix}_${model}_batch_${s}_lr_${l}_epochs_${epoch}_seed_${seed}_${ratio}
         done
     done
 done

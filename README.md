@@ -5,16 +5,14 @@ This is the reproduction package for the submission entitled **TORQUE: A Reading
 
 Usage
 ----------
-0. TORQUE can be found in `data/`
+TORQUE can be found in `data/`
 
-1. Fine-tune pretrained LMs on TORQUE
-
+Fine-tune pretrained LMs on TORQUE
 ```
 bash code/run_end_to_end.sh
 ```
 
-2. Evaluate trained model and report performances
-
+Evaluate trained model and report performances
 ```
 bash code/eval_end_to_end.sh
 ```
