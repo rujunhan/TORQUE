@@ -43,7 +43,7 @@ def sort_events(events):
 def compute_cluster_size(pid, cid):
     return len(question_cluster[pid][cid])
 
-raw_path = "raw/"
+raw_path = "./raw/"
 
 split = "dev"
 
@@ -235,5 +235,5 @@ for k, passage in data.items():
 
 print(len(samples))
 
-with open('../data/individual_dev_end2end_final.json', 'w') as outfile:
-    json.dump(samples, outfile)
+with open('./data/individual_dev_end2end_final.json', 'w') as outfile:
+    json.dump(samples, outfile, sort_keys=True)

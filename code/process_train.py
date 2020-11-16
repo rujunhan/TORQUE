@@ -157,5 +157,5 @@ for r, row in data.iterrows():
             count += 1
 print(len(samples))
 
-with open('../data/train_end2end_final.json', 'w') as outfile:
-     json.dump(samples, outfile)
+with open('./data/train_end2end_final.json', 'w') as outfile:
+     json.dump(samples, outfile, sort_keys=True)
