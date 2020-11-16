@@ -65,5 +65,5 @@ for k, passage in data.items():
 
 print(len(samples))
 
-with open('../data/individual_test_end2end_final_unlabeld.json', 'w') as outfile:
-    json.dump(samples, outfile)
+with open('./data/individual_test_end2end_final_unlabeld.json', 'w') as outfile:
+    json.dump(samples, outfile, sort_keys=True)
