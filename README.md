@@ -1,16 +1,33 @@
 Introduction
 ---------
-This is the reproduction package for the submission entitled **TORQUE: A Reading Comprehension Dataset of Temporal Ordering Questions** to EMNLP'2020. Also comes along with it is the entire dataset of TORQUE already split into train/dev/test. We'll incorporate any suggestions from the reviewers and make the dataset and package public for future investigations after acceptance. Thanks in advance for reviewers' time and effort in improving this paper.
+This is the reproduction package for  **TORQUE: A Reading Comprehension Dataset of Temporal Ordering Questions** in EMNLP'2020 [(link)](https://allennlp.org/torque.html).
 
-Raw Data
+Download raw data
 ----------
-You can download the original TORQUE datasets from https://github.com/qiangning/TORQUE-dataset/tree/main/data/. Save all .json files there into `./raw/`.
-To process TORQUE for the modeling, run,
+Please see [here](https://github.com/rujunhan/TORQUE/tree/master/raw).
 
+Preprocessing
+----------
+You may want to run the following python script first if `averaged_perceptron_tagger` isn't already installed on your computer.
 ```
+import nltk
+nltk.download('averaged_perceptron_tagger')
+```
+
+And then, to process TORQUE for the modeling, run from the root dir of this project,
+```
+mkdir -p data
 python code/process_train.py
 python code/process_dev.py
 python code/process_test.py
+```
+
+You may find some output message like below, which is expected.
+```
+...
+case 2: single character ('(12,13)', 's')
+ignore case: WDT
+...
 ```
 
 Usage
