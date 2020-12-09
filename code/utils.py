@@ -55,6 +55,79 @@ def get_train_dev_ids(data_dir, data_type):
     devIds = [f.strip() for f in open("%s/%s/devIds.txt" % (data_dir, data_type))]
     return trainIds, devIds
 
+
+def convert_to_features_roberta_no_label(data, tokenizer, max_length=150, evaluation=False):
+    # each sample will have <s> Question </s> </s> Context </s>
+    samples = []
+    counter = 0
+    max_len_global = 0  # to show global max_len without truncating
+
+    for k, v in data.items():
+        start_token = ['<s>']
+        question = tokenizer.tokenize(v['question'])
+
+        new_tokens = ["</s>", "</s>"]  # two sent sep symbols according the huggingface documentation
+        orig_to_tok_map = []
+        for i, token in enumerate(v['context']):
+            orig_to_tok_map.append(len(new_tokens))
+            temp_tokens = tokenizer.tokenize(token)
+            new_tokens.extend(temp_tokens)
+
+        new_tokens.append("</s>")
+        length = len(new_tokens)
+        orig_to_tok_map.append(length)
+        assert len(orig_to_tok_map) == len(v['context']) + 1  # account for ending </s>
+
+        tokenized_ids = tokenizer.convert_tokens_to_ids(start_token + question + new_tokens)
+        if len(tokenized_ids) > max_len_global:
+            max_len_global = len(tokenized_ids)
+
+        if len(tokenized_ids) > max_length:
+            ending = tokenized_ids[-1]
+            tokenized_ids = tokenized_ids[:-(len(tokenized_ids) - max_length + 1)] + [ending]
+
+        segment_ids = [0] * len(tokenized_ids)
+        # mask ids
+        mask_ids = [1] * len(tokenized_ids)
+
+        # padding
+        if len(tokenized_ids) < max_length:
+            # Zero-pad up to the sequence length.
+            padding = [0] * (max_length - len(tokenized_ids))
+            tokenized_ids += padding
+            mask_ids += padding
+            segment_ids += padding
+        assert len(tokenized_ids) == max_length
+
+        # construct a sample
+        # offset: </s> </s> counted in orig_to_tok_map already, so only need to worry about <s>
+
+        # duplicate P + Q for each answer
+        offsets = []
+        for kk, vv in enumerate(v['context']):
+            offsets.append(orig_to_tok_map[kk] + len(question) + 1)
+
+        sample = {'offset': offsets,
+                  'input_ids': tokenized_ids,
+                  'mask_ids': mask_ids,
+                  'segment_ids': segment_ids,
+                  'question_id': k}
+        # add these three field for qualitative analysis
+        if evaluation:
+            sample['passage'] = v['context']
+            sample['question'] = v['question']
+            sample['question_cluster'] = v['question_cluster']
+            sample['cluster_size'] = v['cluster_size']
+        samples.append(sample)
+
+        # check some example data
+        if counter < 0:
+            print(sample)
+        counter += 1
+
+    print("Maximum length after tokenization is: % s" % (max_len_global))
+    return samples
+
 def convert_to_features_roberta(data, tokenizer, max_length=150, evaluation=False,
                                 instance=True, end_to_end=False):
     # each sample will have <s> Question </s> </s> Context </s>
@@ -160,7 +233,6 @@ def convert_to_features_roberta(data, tokenizer, max_length=150, evaluation=Fals
     print("Maximum length after tokenization is: % s" % (max_len_global))
     return samples
 
-
 def flatten_answers(answers):    
     # flatten answers and use batch length to map back to the original input   
     offsets = [a for ans in answers for a in ans[1]]
@@ -171,6 +243,13 @@ def flatten_answers(answers):
     assert len(labels) == sum(lengths)
     
     return offsets, labels, lengths
+
+def flatten_answers_no_label(answers):
+    offsets = [a for ans in answers for a in ans]
+    lengths = [len(ans) for ans in answers]
+
+    assert len(offsets) == sum(lengths)
+    return offsets, lengths
 
 
 def convert_to_features(data, tokenizer, max_length=150, evaluation=False,

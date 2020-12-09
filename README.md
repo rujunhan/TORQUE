@@ -27,4 +27,10 @@ Evaluate trained model and report performances
 bash code/eval_end_to_end.sh
 ```
 
+Output model predictions for the leaderboard
+```
+bash pred_for_leaderboard.sh
+```
+Assuming your trained model is saved in `${model_dir}/pytorch_model.bin` where `${model_dir}` corresponds to the `${output_dir}` in `run_end_to_end.sh`
+
 
