@@ -24,7 +24,7 @@ for task in "${tasks[@]}"
 	    --model_dir output/${dir}/  \
 	    --max_seq_length 178 \
 	    --eval_batch_size 12 \
-	    --seed ${seed}
+	    --seed ${s}
 	    done
     done
 done
