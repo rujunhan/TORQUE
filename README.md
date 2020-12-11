@@ -51,3 +51,8 @@ bash code/pred_for_leaderboard.sh
 Assuming your trained model is saved in `${model_dir}/pytorch_model.bin` where `${model_dir}` corresponds to the `${output_dir}` in `run_end_to_end.sh`
 
 
+If you want to test your output format for the leaderboard, you can use the provided dev set by running,
+```
+bash code/pred_for_leaderboard.sh
+```
+the output evaluation metrics should be identical to those from eval_end_to_end.sh.

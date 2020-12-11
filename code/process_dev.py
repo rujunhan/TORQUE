@@ -53,6 +53,10 @@ with open('%s/%s.json' % (raw_path, split), 'r') as infile:
 with open('%s/question_clustering.json' % raw_path, 'r') as infile:
     question_cluster = json.load(infile)
 
+# lookup question ids corresponding to the leaderboard eval code
+with open('%s/qid_map_dev.json' % raw_path, 'r') as infile:
+    qid_map = json.load(infile)
+
 samples = {}
 for k, passage in data.items():
     context = passage['passage'].replace("\"", "@")  # nltk has problem processing ". Replace it with "@"
@@ -230,7 +234,7 @@ for k, passage in data.items():
                 if sum(labels) == 0:
                     break
 
-        samples["%s_%s" % (prefix, count)] = sample
+        samples["%s_%s" % (prefix, qid_map[prefix][question])] = sample
         count += 1
 
 print(len(samples))

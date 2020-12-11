@@ -70,6 +70,11 @@ def main():
                         type=str,
                         required=True,
                         help="Suffix of filename")
+    parser.add_argument("--split",
+                        default='dev',
+                        type=str,
+                        required=True,
+                        help="data split")
 
     ## Other parameters
     parser.add_argument("--max_seq_length",
@@ -128,65 +133,62 @@ def main():
                                                     cache_dir=cache_dir, mlp_hid=args.mlp_hid_size)
     model.to(device)
     hyper_params = args.model_dir.split('/')[1].split('_')
-    for eval_file in ['test']:  # default question, non-default question, overall
+    eval_file = args.split
 
-        print("=" * 50 + "Evaluating %s" % eval_file + "=" * 50)
-        eval_data = load_data(args.data_dir, "individual_%s" % eval_file, args.file_suffix)
-        if 'roberta' in args.model:
-            eval_features = convert_to_features_roberta_no_label(eval_data, tokenizer,
-                                                                max_length=args.max_seq_length, evaluation=True)
-        else:
-            # other LM models not implemented yet
-            continue
+    print("=" * 50 + "Evaluating %s" % eval_file + "=" * 50)
+    eval_data = load_data(args.data_dir, "individual_%s" % eval_file, args.file_suffix)
+    if 'roberta' in args.model:
+        eval_features = convert_to_features_roberta_no_label(eval_data, tokenizer,
+                                                            max_length=args.max_seq_length, evaluation=True)
 
-        logger.info("***** Running evaluation *****")
-        logger.info("  Num examples = %d", len(eval_features))
-        logger.info("  Batch size = %d", args.eval_batch_size)
+    logger.info("***** Running evaluation *****")
+    logger.info("  Num examples = %d", len(eval_features))
+    logger.info("  Batch size = %d", args.eval_batch_size)
 
-        eval_input_ids = torch.tensor(select_field(eval_features, 'input_ids'), dtype=torch.long)
-        eval_input_mask = torch.tensor(select_field(eval_features, 'mask_ids'), dtype=torch.long)
-        eval_segment_ids = torch.tensor(select_field(eval_features, 'segment_ids'), dtype=torch.long)
-        eval_offsets = select_field(eval_features, 'offset')
-        eval_key_indices = torch.tensor(list(range(len(eval_offsets))), dtype=torch.long)
+    eval_input_ids = torch.tensor(select_field(eval_features, 'input_ids'), dtype=torch.long)
+    eval_input_mask = torch.tensor(select_field(eval_features, 'mask_ids'), dtype=torch.long)
+    eval_segment_ids = torch.tensor(select_field(eval_features, 'segment_ids'), dtype=torch.long)
+    eval_offsets = select_field(eval_features, 'offset')
+    eval_key_indices = torch.tensor(list(range(len(eval_offsets))), dtype=torch.long)
 
-        # collect unique question ids for EM calculation
-        question_ids = select_field(eval_features, 'question_id')
+    # collect unique question ids for EM calculation
+    question_ids = select_field(eval_features, 'question_id')
 
-        eval_data = TensorDataset(eval_input_ids, eval_input_mask, eval_segment_ids, eval_key_indices)
+    eval_data = TensorDataset(eval_input_ids, eval_input_mask, eval_segment_ids, eval_key_indices)
 
-        # Run prediction for full data
-        eval_sampler = SequentialSampler(eval_data)
-        eval_dataloader = DataLoader(eval_data, sampler=eval_sampler, batch_size=args.eval_batch_size)
+    # Run prediction for full data
+    eval_sampler = SequentialSampler(eval_data)
+    eval_dataloader = DataLoader(eval_data, sampler=eval_sampler, batch_size=args.eval_batch_size)
 
-        eval_loss, eval_accuracy, best_eval_f1, nb_eval_examples, nb_eval_steps = 0.0, 0.0, 0.0, 0, 0
+    eval_loss, eval_accuracy, best_eval_f1, nb_eval_examples, nb_eval_steps = 0.0, 0.0, 0.0, 0, 0
 
-        all_predictions = {}
-        for input_ids, input_masks, segment_ids, instance_indices in tqdm(eval_dataloader, desc="Evaluating"):
-            input_ids = input_ids.to(device)
-            input_masks = input_masks.to(device)
-            segment_ids = segment_ids.to(device)
+    all_predictions = {}
+    for input_ids, input_masks, segment_ids, instance_indices in tqdm(eval_dataloader, desc="Evaluating"):
+        input_ids = input_ids.to(device)
+        input_masks = input_masks.to(device)
+        segment_ids = segment_ids.to(device)
 
-            offsets, lengths = flatten_answers_no_label([eval_offsets[i]
-                                                         for i in instance_indices.tolist()])
+        offsets, lengths = flatten_answers_no_label([eval_offsets[i]
+                                                     for i in instance_indices.tolist()])
 
-            with torch.no_grad():
-                logits = model(input_ids, offsets, lengths, token_type_ids=segment_ids,
-                               attention_mask=input_masks)
+        with torch.no_grad():
+            logits = model(input_ids, offsets, lengths, token_type_ids=segment_ids,
+                           attention_mask=input_masks)
 
-            logits = logits.detach().cpu().numpy()
+        logits = logits.detach().cpu().numpy()
 
-            nb_eval_examples += logits.shape[0]
-            nb_eval_steps += 1
+        nb_eval_examples += logits.shape[0]
+        nb_eval_steps += 1
 
-            batch_preds = np.argmax(logits, axis=1)
-            bi = 0
-            for l, idx in enumerate(instance_indices):
-                pred = [int(batch_preds[bi + li]) for li in range(lengths[l])]
-                all_predictions[question_ids[idx]] = pred
-                bi += lengths[l]
+        batch_preds = np.argmax(logits, axis=1)
+        bi = 0
+        for l, idx in enumerate(instance_indices):
+            pred = [int(batch_preds[bi + li]) for li in range(lengths[l])]
+            all_predictions[question_ids[idx]] = pred
+            bi += lengths[l]
 
-        with open("./output/test_preds_%s_%s.json" % (hyper_params[-5], args.seed), 'w') as outfile:
-             json.dump(all_predictions, outfile)
+    with open("./output/%s_preds_%s_%s.json" % (eval_file, hyper_params[-5], args.seed), 'w') as outfile:
+         json.dump(all_predictions, outfile)
 
 if __name__ == "__main__":
     main()
