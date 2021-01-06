@@ -102,7 +102,7 @@ def evaluate(golds, preds):
     print("the current eval clustered EM (Relaxed) is: %.4f" % (em_cluster_relaxed_res))
     print("the current eval clusrered F1 (max>=0.8) is: %.4f" % (f1_cluster_80_res))
 
-    return np.mean(max_f1s), (em_cluster_relaxed_res), (f1_cluster_80_res)
+    return np.mean(max_f1s), em_counter / len(golds), (f1_cluster_80_res)
 
 def main(args):
     labels_file = args.labels_file
